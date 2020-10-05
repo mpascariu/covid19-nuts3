@@ -5,14 +5,19 @@
 # Jose Manuel Aburto, jose.aburto@sociology.ox.ac.uk, @jm_aburto
 #===============================================================================
 
-# This script replicates the map and the inset plots starting from the pre-processed datasets. Check "R/prepare-data.R" to replicate the data acquisition and processing steps. The 2020-07-01 versions of the datasets that might change in the future are stored in "data/raw"
+# This script replicates the map and the inset plots starting from the 
+# pre-processed datasets. Check "R/prepare-data.R" to replicate the data 
+# acquisition and processing steps. The 2020-07-01 versions of the datasets 
+# that might change in the future are stored in "data/raw"
 
 # prepare the session -- in case you start here
-source("R/prepare-session.R")
+# source("R/prepare-session.R")
 
 
 # load back the ready datasets to plot
-load("data/ready.rda")
+# load("data/ready.rda")
+
+
 
 # deviation from EU level   
 me3 %>% 
@@ -25,7 +30,8 @@ me3 %>%
     )+
     scale_fill_manual(
         values = pal.25, 
-        guide = guide_legend(ncol = 3, title.position = "top")
+        guide = guide_legend(ncol = 4, title.position = "top"),
+        drop=FALSE
     )+
     ggthemes::theme_map(base_family = font_rc, base_size = 16)+
     theme(
@@ -35,11 +41,23 @@ me3 %>%
         panel.spacing = unit(0, "lines")
     )+
     labs(
-        fill = "How much the estimate for a specific region is below or above the European\npooled estimate of the proportion of population at risk of death due to COVID-19"
+        fill = paste(
+            "How much the IFR estimate for a specific region is below or", 
+            "above the European\npooled estimate of the proportion of",
+            "population at risk of death due to COVID-19",
+            "\nin the 80+ age category")
     )
 
 map <- last_plot()
 
+
+ggsave(
+    "figure/map80.pdf", 
+    map, 
+    width = 9, 
+    height = 9,
+    device = cairo_pdf
+)
 
 # plot values by countries
 me3 %>% 

@@ -5,6 +5,13 @@
 # Jose Manuel Aburto, jose.aburto@sociology.ox.ac.uk, @jm_aburto
 #===============================================================================
 
+# --------------------------------------------------- #
+# Author: Marius D. Pascariu
+# License: MIT
+# Last update: Tue Sep 22 11:01:15 2020
+# --------------------------------------------------- #
+remove(list = ls())
+
 library(tidyverse)
 library(magrittr)
 library(RColorBrewer)
@@ -20,3 +27,7 @@ font_add_google("Roboto Condensed", "Roboto Condensed")
 font_add_google("Roboto Slab", "Roboto Slab")
 showtext::showtext_auto()
 
+library(ISOcodes)
+library(rmapshaper)
+library(ggthemes)
+library(RColorBrewer)

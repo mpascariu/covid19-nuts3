@@ -57,8 +57,6 @@ cities <- maps::world.cities %>%
 
 # get full country names --------------------------------------------------
 
-library(ISOcodes)
-
 cntr <- gde3 %>% 
     st_drop_geometry() %>% 
     mutate(country = id %>% str_sub(1, 2)) %>% 
@@ -78,7 +76,7 @@ cntr <- gde3 %>%
 # The version stored is from 2020-07-01
 # Note: for sharing efficiency we compressed the csv file as .gz
 # https://osf.io/wu5ve/download
-coverage <- read_csv("data/raw/Output_10.csv.gz", skip = 3)
+coverage <- read_csv("data/raw/Output_10_20200922.zip", skip = 3)
 
 # calculate CFRs in the given age groups over the pooled COVerAGE-DB population
 cfr_cov <- coverage %>% 
@@ -142,12 +140,18 @@ adj_ifr <- ifr %>%
 
 
 # eurostat population structures ------------------------------------------
-df_eu <- get_eurostat("demo_r_pjangrp3")
-# just in case Eurostat changes the data, a copy of the dataset downloaded on 2020-07-01 is copied to the directory "data/raw"
+# df_eu <- get_eurostat("demo_r_pjangrp3")
+# just in case Eurostat changes the data, a copy of the dataset downloaded on 
+# 2020-07-01 is copied to the directory "data/raw"
+load("data/raw/df_eu.rda")
+df_eu
 
 
 # redefine age factor levels -- 80+ age category
-age_levels <- c("rm", "rm", "10-19", "10-19", "20-29", "20-29", "30-39", "30-39", "40-49", "40-49", "0-9", "50-59", "50-59", "60-69", "60-69", "70-79", "70-79", "80+", "80+", "rm", "80+", "0-9")
+age_levels <- c("rm", "rm", "10-19", "10-19", "20-29", "20-29", 
+                "30-39", "30-39", "40-49", "40-49", "0-9", "50-59", 
+                "50-59", "60-69", "60-69", "70-79", "70-79", "80+", 
+                "80+", "rm", "80+", "0-9")
 
 
 # clean up the df at NUTS-3 level
@@ -180,6 +184,8 @@ dfe3 <- df_eu %>%
     left_join(adj_ifr, c("age", "sex")) %>% 
     # assume 5/6 get infected
     mutate(death = (value*5/6) * (adj_ifr/100)) %>% 
+    
+    filter(age == "80+") %>%    # HERE select the desired age group!!!! MP
     group_by(id) %>% 
     summarise(
         value = value %>% sum(na.rm = TRUE),
@@ -195,22 +201,51 @@ dfe3 <- df_eu %>%
     # discrete
     mutate(
         rel_prop_gr = rel_prop %>% 
-            cut(c(0, .5, 2/3, 4/5, .95, 100/95, 5/4, 3/2, 2, Inf))
+            # cut(c(0, .5, 2/3, 4/5, .95, 100/95, 5/4, 3/2, 2, Inf))
+            cut(c(0, .94, .96, .97, .98, .99, 1, 1.01, 1.02, 1.03, 1.04, 1.06, Inf))
     )
+
+# summary(dfe3$rel_prop)
 
 # calculate the group sizes
 n_per_age_group <- dfe3 %>% pull(rel_prop_gr) %>% table() %>% paste
 
 new_levels <- paste0(
     c(
-        "Below 50%", "From 50% to 67%", "From 67% to 80%",
-        "From 80% to 95%", "European average ± 5%", "From 105% to 125%",
-        "From 125% to 150%", "From 150% to 200%", "Above 200%"
+        "Below 94%", 
+        "94% to 96%", 
+        "96% to 97%",
+        "97% to 98%",
+        "98% to 99%",
+        "99% to European average", 
+        "100% to 101%", 
+        "101% to 102%",
+        "102% to 103%", 
+        "103% to 104%", 
+        "104% to 106%", 
+        "Above 106%"
     ),
     " (",
     n_per_age_group,
     ")"
 )
+
+# new_levels <- paste0(
+#     c(
+#         "Below 50%", 
+#         "From 50% to 67%", 
+#         "From 67% to 80%",
+#         "From 80% to 95%", 
+#         "European average ± 5%", 
+#         "From 105% to 125%",
+#         "From 125% to 150%", 
+#         "From 150% to 200%", 
+#         "Above 200%"
+#     ),
+#     " (",
+#     n_per_age_group,
+#     ")"
+# )
 
 dfe3 <- dfe3 %>% 
     mutate(rel_prop_gr = rel_prop_gr %>% lvls_revalue(new_levels))
@@ -222,12 +257,12 @@ me3 <- gde3 %>% left_join(dfe3, "id") %>% drop_na()
 
 # color palette
 pal <- RColorBrewer::brewer.pal(9, "BrBG") %>% rev 
-pal.25 <- pal %>% clr_darken(shift = .25)
+# pal.25 <- pal %>% clr_darken(shift = .25)
+pal.25 <- colorRampPalette(colors = pal)(12) %>% clr_darken(shift = .25)
 
-
-# save processed data -----------------------------------------------------
-save(
-    me3, bord, cities, cntr, adj_ifr, pal.25,
-    file = "data/ready.rda", compress = "xz"
-)
+# # save processed data -----------------------------------------------------
+# save(
+#     me3, bord, cities, cntr, adj_ifr, pal.25,
+#     file = "data/ready.rda", compress = "xz"
+# )
 
